@@ -1,0 +1,107 @@
+body {
+  font-family: sans-serif;
+  background: #ffffff;
+  color: #000;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+#app {
+  width: 100%;
+  max-width: 500px;
+}
+
+#info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  width: 40%;
+  padding: 0 140px;   /* ← これを追加 */
+}
+
+#status {
+  text-align: left;
+}
+
+#progress {
+  text-align: right;
+}
+
+/* カード＋前後ボタン */
+.card-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+#card {
+  border: 1px solid #000;
+  border-radius: 8px;
+  padding: 30px;
+  min-height: 140px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 前へ・次へ */
+.nav-btn {
+  padding: 10px 12px;
+  cursor: pointer;
+  height: fit-content;
+}
+
+/* ボタン群 */
+.status-buttons,
+.control-buttons,
+.filter-buttons {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.status-buttons {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.filter-buttons {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+button {
+  padding: 8px;
+  border: 2px solid #000;   /* ← 通常時は薄いグレー */
+  border-radius: 6px;
+  background: #9cf;
+  color: #000;
+}
+
+button.active {
+  border-color: red;
+  background: #ffe5e5;
+  color: red;
+}
+
+button:active {
+  transform: none;
+}
+
+/* スマホ対応 */
+@media (max-width: 480px) {
+  .card-row {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-btn {
+    width: 100%;
+  }
+}

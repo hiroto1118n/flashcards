@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Flash Cards</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Flash Cards">
+</head>
+<body>
+
+<div id="app">
+
+  <div id="info">
+  	<div id="status">状態：暗記した</div>
+  	<div id="progress">1 / 30</div>
+  </div>
+
+  <!-- カード + 前後ボタン -->
+  <div class="card-row">
+    <button id="prevBtn" class="nav-btn">前へ</button>
+
+    <div id="card">読み込み中...</div>
+
+    <button id="nextBtn" class="nav-btn">次へ</button>
+  </div>
+
+  <!-- ステータス付与 -->
+  <div class="status-buttons">
+    <button id="makeBtn">英作文できる</button>
+    <button id="memorizedBtn">暗記した</button>
+    <button id="unknownBtn">覚えてない</button>
+  </div>
+
+  <!-- シャッフル -->
+  <div class="control-buttons">
+    <button id="shuffleBtn">シャッフル</button>
+  </div>
+
+  <!-- フィルター -->
+  <div class="filter-buttons">
+    <button id="filterAll">すべて</button>
+    <button id="filterMake">英作文できる</button>
+    <button id="filterMemorized">暗記した</button>
+    <button id="filterUnknown">覚えてない</button>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
