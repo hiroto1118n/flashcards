@@ -35,8 +35,7 @@ const filterButtons = {
 function saveStatuses() {
   const data = {};
   cards.forEach(card => {
-    const key = `${card.rowNumber}`;
-    data[key] = card.status;
+    data[card.rowNumber] = card.status;
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
@@ -67,7 +66,7 @@ fetch(TSV_URL)
 
       if (japanese && english) {
         cards.push({
-          rowNumber: i + 1, // スプレッドシート行番号
+          rowNumber: i + 1, // スプレッドシートの行番号
           japanese,
           english,
           status: "unrated"
