@@ -24,6 +24,9 @@ const makeBtn = document.getElementById("makeBtn");
 const memorizedBtn = document.getElementById("memorizedBtn");
 const unknownBtn = document.getElementById("unknownBtn");
 
+const jumpInput = document.getElementById("jumpInput");
+const jumpBtn = document.getElementById("jumpBtn");
+
 const filterButtons = {
   all: document.getElementById("filterAll"),
   make: document.getElementById("filterMake"),
@@ -31,7 +34,7 @@ const filterButtons = {
   unknown: document.getElementById("filterUnknown"),
 };
 
-/* ===== LocalStorage ===== */
+/* LocalStorage */
 function saveStatuses() {
   const data = {};
   cards.forEach(card => {
@@ -52,7 +55,7 @@ function loadStatuses() {
   });
 }
 
-/* ===== TSV 読み込み ===== */
+/* TSV 読み込み */
 fetch(TSV_URL)
   .then(res => res.text())
   .then(text => {
@@ -60,13 +63,12 @@ fetch(TSV_URL)
 
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split("\t");
-
       const japanese = cols[1];
       const english = cols[2];
 
       if (japanese && english) {
         cards.push({
-          rowNumber: i + 1, // スプレッドシートの行番号
+          rowNumber: i + 1,
           japanese,
           english,
           status: "unrated"
@@ -79,7 +81,7 @@ fetch(TSV_URL)
     showCard();
   });
 
-/* ===== 表示 ===== */
+/* 表示 */
 function showCard() {
   if (filteredCards.length === 0) {
     cardTextEl.textContent = "カードがありません";
@@ -98,7 +100,7 @@ function showCard() {
   statusEl.textContent = `状態：${getStatusLabel(card.status)}`;
 }
 
-/* ===== 操作 ===== */
+/* 操作 */
 function flipCard() {
   const card = filteredCards[currentIndex];
   cardTextEl.textContent =
@@ -118,31 +120,25 @@ function prevCard() {
 }
 
 function shuffleCards() {
-  for (let i = filteredCards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [filteredCards[i], filteredCards[j]] =
-      [filteredCards[j], filteredCards[i]];
-  }
+  filteredCards.sort(() => Math.random() - 0.5);
   currentIndex = 0;
   showCard();
 }
 
-/* ===== ステータス ===== */
+/* ステータス */
 function setStatus(status) {
   filteredCards[currentIndex].status = status;
   saveStatuses();
   showCard();
 }
 
-/* ===== フィルター ===== */
+/* フィルター */
 function applyFilter(status) {
   currentFilter = status;
-
   filteredCards =
     status === "all"
       ? [...cards]
       : cards.filter(c => c.status === status);
-
   currentIndex = 0;
   updateFilterButtons();
   showCard();
@@ -157,7 +153,25 @@ function updateFilterButtons() {
   });
 }
 
-/* ===== 表示用 ===== */
+/* 番号ジャンプ */
+function jumpToCard() {
+  const value = Number(jumpInput.value);
+  if (!value) return;
+
+  const index = filteredCards.findIndex(
+    card => card.rowNumber === value
+  );
+
+  if (index === -1) {
+    alert("この番号のカードは現在表示されていません");
+    return;
+  }
+
+  currentIndex = index;
+  showCard();
+}
+
+/* 表示用 */
 function getStatusLabel(status) {
   return {
     make: "英作文できる",
@@ -167,7 +181,7 @@ function getStatusLabel(status) {
   }[status] || "-";
 }
 
-/* ===== イベント ===== */
+/* イベント */
 cardEl.addEventListener("click", flipCard);
 nextBtn.addEventListener("click", nextCard);
 prevBtn.addEventListener("click", prevCard);
@@ -181,3 +195,8 @@ filterButtons.all.addEventListener("click", () => applyFilter("all"));
 filterButtons.make.addEventListener("click", () => applyFilter("make"));
 filterButtons.memorized.addEventListener("click", () => applyFilter("memorized"));
 filterButtons.unknown.addEventListener("click", () => applyFilter("unknown"));
+
+jumpBtn.addEventListener("click", jumpToCard);
+jumpInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") jumpToCard();
+});
