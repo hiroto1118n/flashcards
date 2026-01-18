@@ -16,9 +16,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  width: 40%;
-  padding: 0 140px;   /* ← これを追加 */
+  margin-bottom: 8px;
 }
 
 #status {
@@ -39,6 +37,7 @@ body {
 }
 
 #card {
+  position: relative;
   border: 1px solid #000;
   border-radius: 8px;
   padding: 30px;
@@ -53,11 +52,22 @@ body {
   user-select: none;
 }
 
+#cardNumber {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+#cardText {
+  width: 100%;
+}
+
 /* 前へ・次へ */
 .nav-btn {
   padding: 10px 12px;
   cursor: pointer;
-  height: fit-content;
 }
 
 /* ボタン群 */
@@ -79,7 +89,7 @@ body {
 
 button {
   padding: 8px;
-  border: 2px solid #000;   /* ← 通常時は薄いグレー */
+  border: 2px solid #000;
   border-radius: 6px;
   background: #9cf;
   color: #000;
@@ -89,10 +99,6 @@ button.active {
   border-color: red;
   background: #ffe5e5;
   color: red;
-}
-
-button:active {
-  transform: none;
 }
 
 /* スマホ対応 */
