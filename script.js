@@ -1,5 +1,5 @@
-const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_s11QpNmzgSpUm_dJHcw7ljLd-omtgCKheM24lb_IfrXtnEXLaqCeNdGBKkcwELI3sH509CcfzRoX/pub?output=csv&gid=0";
+const TSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_s11QpNmzgSpUm_dJHcw7ljLd-omtgCKheM24lb_IfrXtnEXLaqCeNdGBKkcwELI3sH509CcfzRoX/pub?output=tsv&gid=0";
 
 const STORAGE_KEY = "flashcardStatuses";
 
@@ -11,6 +11,8 @@ let currentFilter = "all";
 
 /* 要素取得 */
 const cardEl = document.getElementById("card");
+const cardNumberEl = document.getElementById("cardNumber");
+const cardTextEl = document.getElementById("cardText");
 const progressEl = document.getElementById("progress");
 const statusEl = document.getElementById("status");
 
@@ -33,7 +35,7 @@ const filterButtons = {
 function saveStatuses() {
   const data = {};
   cards.forEach(card => {
-    const key = `${card.japanese}|${card.english}`;
+    const key = `${card.rowNumber}`;
     data[key] = card.status;
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -45,26 +47,27 @@ function loadStatuses() {
 
   const data = JSON.parse(saved);
   cards.forEach(card => {
-    const key = `${card.japanese}|${card.english}`;
-    if (data[key]) {
-      card.status = data[key];
+    if (data[card.rowNumber]) {
+      card.status = data[card.rowNumber];
     }
   });
 }
 
-/* ===== CSV 読み込み ===== */
-fetch(CSV_URL)
+/* ===== TSV 読み込み ===== */
+fetch(TSV_URL)
   .then(res => res.text())
   .then(text => {
     const lines = text.trim().split("\n");
 
     for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(",");
+      const cols = lines[i].split("\t");
+
       const japanese = cols[1];
       const english = cols[2];
 
       if (japanese && english) {
         cards.push({
+          rowNumber: i + 1, // スプレッドシート行番号
           japanese,
           english,
           status: "unrated"
@@ -80,7 +83,8 @@ fetch(CSV_URL)
 /* ===== 表示 ===== */
 function showCard() {
   if (filteredCards.length === 0) {
-    cardEl.textContent = "カードがありません";
+    cardTextEl.textContent = "カードがありません";
+    cardNumberEl.textContent = "";
     progressEl.textContent = "0 / 0";
     statusEl.textContent = "状態：-";
     return;
@@ -89,7 +93,8 @@ function showCard() {
   const card = filteredCards[currentIndex];
   showingJapanese = true;
 
-  cardEl.textContent = card.japanese;
+  cardNumberEl.textContent = `No.${card.rowNumber}`;
+  cardTextEl.textContent = card.japanese;
   progressEl.textContent = `${currentIndex + 1} / ${filteredCards.length}`;
   statusEl.textContent = `状態：${getStatusLabel(card.status)}`;
 }
@@ -97,7 +102,8 @@ function showCard() {
 /* ===== 操作 ===== */
 function flipCard() {
   const card = filteredCards[currentIndex];
-  cardEl.textContent = showingJapanese ? card.english : card.japanese;
+  cardTextEl.textContent =
+    showingJapanese ? card.english : card.japanese;
   showingJapanese = !showingJapanese;
 }
 
