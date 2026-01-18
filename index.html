@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Flash Cards</title>
   <link rel="stylesheet" href="style.css">
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Flash Cards">
@@ -13,20 +14,23 @@
 <div id="app">
 
   <div id="info">
-  	<div id="status">状態：暗記した</div>
-  	<div id="progress">1 / 30</div>
+    <div id="status">状態：-</div>
+    <div id="progress">0 / 0</div>
   </div>
 
   <!-- カード + 前後ボタン -->
   <div class="card-row">
     <button id="prevBtn" class="nav-btn">前へ</button>
 
-    <div id="card">読み込み中...</div>
+    <div id="card">
+      <div id="cardNumber"></div>
+      <div id="cardText">読み込み中...</div>
+    </div>
 
     <button id="nextBtn" class="nav-btn">次へ</button>
   </div>
 
-  <!-- ステータス付与 -->
+  <!-- ステータス -->
   <div class="status-buttons">
     <button id="makeBtn">英作文できる</button>
     <button id="memorizedBtn">暗記した</button>
@@ -48,6 +52,7 @@
 
 </div>
 
-<script src="script.js"></script>
+<!-- ★ defer を必ず付ける -->
+<script src="script.js" defer></script>
 </body>
 </html>
