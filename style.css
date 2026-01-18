@@ -1,7 +1,6 @@
 body {
   font-family: sans-serif;
-  background: #ffffff;
-  color: #000;
+  background: #fff;
   display: flex;
   justify-content: center;
   padding: 20px;
@@ -15,25 +14,15 @@ body {
 #info {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-#status {
-  text-align: left;
-}
-
-#progress {
-  text-align: right;
-}
-
-/* カード＋前後ボタン */
+/* カード＋前後 */
 .card-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  align-items: center;
 }
 
 #card {
@@ -42,32 +31,26 @@ body {
   border-radius: 8px;
   padding: 30px;
   min-height: 140px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  text-align: center;
   cursor: pointer;
-  user-select: none;
 }
 
 #cardNumber {
   position: absolute;
-  top: 8px;
-  left: 10px;
+  top: 6px;
+  left: 8px;
   font-size: 12px;
   color: #666;
 }
 
 #cardText {
-  width: 100%;
+  text-align: center;
 }
 
-/* 前へ・次へ */
 .nav-btn {
-  padding: 10px 12px;
-  cursor: pointer;
+  padding: 10px;
 }
 
 /* ボタン群 */
@@ -80,7 +63,7 @@ body {
 }
 
 .status-buttons {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .filter-buttons {
@@ -90,9 +73,7 @@ body {
 button {
   padding: 8px;
   border: 2px solid #000;
-  border-radius: 6px;
   background: #9cf;
-  color: #000;
 }
 
 button.active {
@@ -101,13 +82,9 @@ button.active {
   color: red;
 }
 
-/* スマホ対応 */
+/* スマホ */
 @media (max-width: 480px) {
   .card-row {
     grid-template-columns: 1fr;
-  }
-
-  .nav-btn {
-    width: 100%;
   }
 }
