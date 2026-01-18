@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Flash Cards</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Flash Cards">
+  <!-- iOS ホーム画面対応 -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Flash Cards" />
 </head>
 <body>
 
 <div id="app">
 
+  <!-- 進捗 & ステータス -->
   <div id="info">
-    <div id="status">状態：-</div>
+    <div id="status">状態：未分類</div>
     <div id="progress">0 / 0</div>
   </div>
 
-  <!-- カード + 前後ボタン -->
+  <!-- カード + 前後 -->
   <div class="card-row">
     <button id="prevBtn" class="nav-btn">前へ</button>
 
@@ -30,11 +31,22 @@
     <button id="nextBtn" class="nav-btn">次へ</button>
   </div>
 
-  <!-- ステータス -->
+  <!-- ステータス付与 -->
   <div class="status-buttons">
     <button id="makeBtn">英作文できる</button>
     <button id="memorizedBtn">暗記した</button>
     <button id="unknownBtn">覚えてない</button>
+  </div>
+
+  <!-- ★ 番号ジャンプ（ここに追加） -->
+  <div class="jump-area">
+    <input
+      type="number"
+      id="jumpInput"
+      placeholder="番号を入力"
+      inputmode="numeric"
+    />
+    <button id="jumpBtn">移動</button>
   </div>
 
   <!-- シャッフル -->
@@ -52,7 +64,6 @@
 
 </div>
 
-<!-- ★ defer を必ず付ける -->
-<script src="script.js" defer></script>
+<script src="script.js"></script>
 </body>
 </html>
