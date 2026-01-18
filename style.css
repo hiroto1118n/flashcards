@@ -1,6 +1,7 @@
 body {
   font-family: sans-serif;
   background: #fff;
+  color: #000;
   display: flex;
   justify-content: center;
   padding: 20px;
@@ -11,30 +12,45 @@ body {
   max-width: 500px;
 }
 
+/* 上部情報 */
 #info {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
+  width: 40%;
+  padding: 0 140px;
+  margin-bottom: 8px;
 }
 
-/* カード＋前後 */
+#status {
+  text-align: left;
+}
+
+#progress {
+  text-align: right;
+}
+
+/* カード + 前後 */
 .card-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
 }
 
 #card {
-  position: relative;
   border: 1px solid #000;
   border-radius: 8px;
-  padding: 30px;
+  padding: 24px;
   min-height: 140px;
+  position: relative;
+
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
+
   cursor: pointer;
+  user-select: none;
 }
 
 #cardNumber {
@@ -42,15 +58,35 @@ body {
   top: 6px;
   left: 8px;
   font-size: 12px;
-  color: #666;
 }
 
 #cardText {
   text-align: center;
 }
 
+/* 前後ボタン */
 .nav-btn {
   padding: 10px;
+}
+
+/* ボタン共通 */
+button {
+  padding: 8px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  background: #9cf;
+  color: #000;
+  cursor: pointer;
+}
+
+button.active {
+  border-color: red;
+  background: #ffe5e5;
+  color: red;
+}
+
+button:active {
+  transform: none;
 }
 
 /* ボタン群 */
@@ -70,19 +106,19 @@ body {
   grid-template-columns: repeat(4, 1fr);
 }
 
-button {
-  padding: 8px;
-  border: 2px solid #000;
-  background: #9cf;
+/* ★ 番号ジャンプ */
+.jump-area {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-button.active {
-  border-color: red;
-  background: #ffe5e5;
-  color: red;
+.jump-area input {
+  flex: 1;
+  padding: 6px;
 }
 
-/* スマホ */
+/* モバイル */
 @media (max-width: 480px) {
   .card-row {
     grid-template-columns: 1fr;
