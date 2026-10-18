@@ -1,69 +1,248 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>Flash Cards</title>
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- iOS ホーム画面対応 -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Flash Cards" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="英語カード">
+<title>英語カード</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#F3F5FA;color:#14213D;font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,sans-serif;touch-action:manipulation;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;gap:1.8vh;padding:max(2vh,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(3vh,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
+.screen.on{display:flex}
+#rot{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#F3F5FA;font-size:18px;z-index:9}
+@media (orientation:portrait){#rot{display:flex}}
+header{display:flex;justify-content:space-between;align-items:baseline;padding-top:.6vh}
+h1{margin:0;font-size:clamp(20px,7.5vh,34px);font-weight:500}
+.sub{font-size:14px;color:#4B5563}
+.tiles{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:1.6vw;min-height:0}
+.tile{border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6vh}
+.tile b{font-size:clamp(16px,6.6vh,28px);font-weight:500}
+.tile span{font-size:clamp(20px,8vh,34px);font-weight:500}
+.tile small{font-size:.5em;margin-left:3px}
+#msg{align-self:center;color:#4B5563;font-size:15px}
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.left{display:flex;gap:10px}
+.rb{width:clamp(38px,11vh,48px);height:clamp(38px,11vh,48px);border-radius:50%;background:#fff;border:.5px solid #D3D8E6;display:grid;place-items:center;font-size:clamp(20px,6vh,24px)}
+.rb.on{background:#14213D;color:#fff;border-color:#14213D}
+.ctr{text-align:center;white-space:nowrap}
+.ctr span{font-size:14px;color:#4B5563}
+.ctr b{font-size:clamp(20px,7vh,26px);font-weight:500;margin-left:6px}
+.chip{justify-self:end;font-size:14px;padding:8px 14px;border:.5px solid #D3D8E6;border-radius:22px;background:#fff}
+.bar{height:4px;border-radius:2px;background:#DCE1EE;flex:none}
+.bar div{height:4px;border-radius:2px;background:#14213D;width:0}
+.row{flex:1;display:flex;gap:12px;min-height:0}
+.side{width:clamp(60px,9vw,84px);border-radius:20px;border:1.5px solid #14213D;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15px;font-weight:500}
+.side svg{font-size:28px}
+#card{flex:1;min-width:0;border-radius:20px;background:#fff;border:.5px solid #D3D8E6;padding:1.8vh 20px;display:flex;flex-direction:column;text-align:center;cursor:pointer}
+.st{display:flex;align-items:center;gap:10px;font-size:14px;color:#4B5563;flex:none}
+.pill{font-size:14px;font-weight:500;padding:5px 14px;border-radius:16px;color:#fff}
+#mid{flex:1;display:flex;flex-direction:column;align-items:center;overflow:auto;min-height:0}
+#mid>:first-child{margin-top:auto}
+#mid>:last-child{margin-bottom:auto}
+.big{font-size:clamp(22px,9vh,40px);font-weight:500;line-height:1.4}
+.en{font-size:clamp(20px,8.4vh,38px);font-weight:500;line-height:1.35}
+.memo{font-size:clamp(14px,4.6vh,18px);color:#4B5563;line-height:1.5;margin-top:1.6vh;white-space:pre-wrap}
+.empty{color:#4B5563;font-size:18px}
+#hint{font-size:14px;color:#4B5563;flex:none;min-height:1.2em}
+.cls{display:flex;gap:10px;flex:none}
+.cl{flex:1;height:clamp(40px,12.5vh,52px);border-radius:14px;border:1.5px solid var(--c);font-size:16px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:4px}
+.cl svg{display:none}
+.cl.on{background:var(--c);color:#fff}
+.cl.on svg{display:block}
+</style>
 </head>
 <body>
+<div id="rot">横向きにしてください</div>
 
-<div id="app">
-
-  <!-- 進捗 & ステータス -->
-  <div id="info">
-    <div id="status">状態：未分類</div>
-    <div id="progress">0 / 0</div>
-  </div>
-
-  <!-- カード + 前後 -->
-  <div class="card-row">
-    <button id="prevBtn" class="nav-btn">前へ</button>
-
-    <div id="card">
-      <div id="cardNumber"></div>
-      <div id="cardText">読み込み中...</div>
-    </div>
-
-    <button id="nextBtn" class="nav-btn">次へ</button>
-  </div>
-
-  <!-- ステータス付与 -->
-  <div class="status-buttons">
-    <button id="makeBtn">英作文できる</button>
-    <button id="memorizedBtn">暗記した</button>
-    <button id="unknownBtn">覚えてない</button>
-  </div>
-
-  <!-- シャッフル -->
-  <div class="control-buttons">
-    <button id="shuffleBtn">シャッフル</button>
-  </div>
-
-  <!-- フィルター -->
-  <div class="filter-buttons">
-    <button id="filterAll">すべて</button>
-    <button id="filterMake">英作文できる</button>
-    <button id="filterMemorized">暗記した</button>
-    <button id="filterUnknown">覚えてない</button>
-  </div>
-
-  <!-- ★ 番号ジャンプ（ここに移動） -->
-  <div class="jump-area">
-    <input
-      type="number"
-      id="jumpInput"
-      placeholder="番号を入力"
-      inputmode="numeric"
-    />
-    <button id="jumpBtn">移動</button>
-  </div>
-
+<section id="home" class="screen on">
+<header><div><div class="sub">English cards</div><h1>どれを復習する？</h1></div><div class="sub" id="total"></div></header>
+<div id="msg">読み込み中…</div>
+<div class="tiles" id="tiles" hidden>
+<button class="tile" data-k="make" style="background:#BFE3C0;color:#14532D"><b>英作文できる</b><span><em id="n-make" style="font-style:normal">0</em><small>枚</small></span></button>
+<button class="tile" data-k="memorized" style="background:#FBEDA8;color:#5C4A05"><b>暗記した</b><span><em id="n-memorized" style="font-style:normal">0</em><small>枚</small></span></button>
+<button class="tile" data-k="unknown" style="background:#F7C1C1;color:#7A1F1F"><b>覚えてない</b><span><em id="n-unknown" style="font-style:normal">0</em><small>枚</small></span></button>
+<button class="tile" data-k="unrated" style="background:#C9CCD2;color:#2A2F38"><b>未分類</b><span><em id="n-unrated" style="font-style:normal">0</em><small>枚</small></span></button>
 </div>
+</section>
 
-<script src="script.js"></script>
+<section id="study" class="screen">
+<div class="top">
+<div class="left">
+<button class="rb" id="homeBtn" aria-label="ホームへ戻る"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/></svg></button>
+<button class="rb" id="shuf" aria-label="シャッフル"><svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
+</div>
+<div class="ctr"><span id="cat"></span><b id="pos">0</b><span id="tot"></span></div>
+<span class="chip" id="chip"></span>
+</div>
+<div class="bar"><div id="bar"></div></div>
+<div class="row">
+<button class="side" id="prev" aria-label="前へ"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>前へ</button>
+<div id="card" role="button" tabindex="0">
+<div class="st"><span>この英文の状態</span><span class="pill" id="pill"></span></div>
+<div id="mid"></div>
+<div id="hint"></div>
+</div>
+<button class="side next" id="next" aria-label="次へ"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>次へ</button>
+</div>
+<div class="cls">
+<button class="cl" id="c-make" style="--c:#0B6E6F"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>英作文できる</button>
+<button class="cl" id="c-memorized" style="--c:#3B4CCA"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>暗記した</button>
+<button class="cl" id="c-unknown" style="--c:#C2410C"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>覚えてない</button>
+</div>
+</section>
+
+<script>
+(function () {
+  var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_s11QpNmzgSpUm_dJHcw7ljLd-omtgCKheM24lb_IfrXtnEXLaqCeNdGBKkcwELI3sH509CcfzRoX/pub?gid=0&single=true&output=csv";
+  var KEY_ST = "flashcards.status.v1", KEY_CACHE = "flashcards.cache.v1";
+  var NAMES = { make: "英作文できる", memorized: "暗記した", unknown: "覚えてない", unrated: "未分類" };
+  var COLORS = { make: "#0B6E6F", memorized: "#3B4CCA", unknown: "#C2410C", unrated: "#4B5563" };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  var cards = [], status = load(KEY_ST) || {}, list = [], idx = 0, flipped = false, filter = "unrated", shuffled = false;
+  function st(id) { return status[id] || "unrated"; }
+
+  function parseCSV(t) {
+    var rows = [], row = [], f = "", q = false, i, c;
+    for (i = 0; i < t.length; i++) {
+      c = t[i];
+      if (q) {
+        if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; }
+        else f += c;
+      } else if (c === '"') q = true;
+      else if (c === ",") { row.push(f); f = ""; }
+      else if (c === "\n") { row.push(f); rows.push(row); row = []; f = ""; }
+      else if (c !== "\r") f += c;
+    }
+    if (f !== "" || row.length) { row.push(f); rows.push(row); }
+    return rows;
+  }
+
+  function toCards(rows) {
+    var out = [];
+    rows.forEach(function (r) {
+      var id = (r[0] || "").trim(), ja = (r[1] || "").trim(), en = (r[2] || "").trim(), memo = (r[3] || "").trim();
+      if (id && ja && en) out.push({ id: id, ja: ja, en: en, memo: memo });
+    });
+    return out;
+  }
+
+  function show(name) {
+    $("home").classList.toggle("on", name === "home");
+    $("study").classList.toggle("on", name === "study");
+  }
+
+  function renderHome() {
+    var n = { make: 0, memorized: 0, unknown: 0, unrated: 0 };
+    cards.forEach(function (c) { n[st(c.id)]++; });
+    Object.keys(n).forEach(function (k) { $("n-" + k).textContent = n[k]; });
+    $("total").textContent = "全" + cards.length + "枚 ・ スプレッドシートから読み込み";
+  }
+
+  function el(cls, text) {
+    var d = document.createElement("div");
+    d.className = cls;
+    d.textContent = text;
+    return d;
+  }
+
+  function renderCard() {
+    var n = list.length, c = list[idx], s = c ? st(c.id) : null, mid = $("mid"), rule;
+    $("cat").textContent = NAMES[filter];
+    $("pos").textContent = n ? idx + 1 : 0;
+    $("tot").textContent = " / " + n;
+    $("bar").style.width = n ? ((idx + 1) / n * 100) + "%" : "0";
+    $("chip").textContent = "シート No." + (c ? c.id : "-");
+    $("shuf").classList.toggle("on", shuffled);
+    $("pill").textContent = s ? NAMES[s] : "-";
+    $("pill").style.background = s ? COLORS[s] : COLORS.unrated;
+    mid.textContent = "";
+    if (!c) mid.appendChild(el("empty", "この分類のカードはありません"));
+    else if (!flipped) mid.appendChild(el("big", c.ja));
+    else {
+      mid.appendChild(el("en", c.en));
+      if (c.memo) mid.appendChild(el("memo", c.memo));
+    }
+    mid.scrollTop = 0;
+    $("hint").textContent = c ? (flipped ? "もう一度タップで日本語へ" : "タップして英文を表示") : "";
+    ["make", "memorized", "unknown"].forEach(function (k) { $("c-" + k).classList.toggle("on", s === k); });
+  }
+
+  function enter(k) {
+    filter = k;
+    list = cards.filter(function (c) { return st(c.id) === k; });
+    idx = 0; flipped = false; shuffled = false;
+    show("study");
+    renderCard();
+  }
+
+  function move(d) {
+    if (!list.length) return;
+    idx = (idx + d + list.length) % list.length;
+    flipped = false;
+    renderCard();
+  }
+
+  function shuffle() {
+    var i, j, t;
+    if (list.length < 2) return;
+    for (i = list.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      t = list[i]; list[i] = list[j]; list[j] = t;
+    }
+    idx = 0; flipped = false; shuffled = true;
+    renderCard();
+  }
+
+  function setStatus(k) {
+    var c = list[idx];
+    if (!c) return;
+    status[c.id] = k;
+    save(KEY_ST, status);
+    renderCard();
+  }
+
+  function flip() {
+    if (!list.length) return;
+    flipped = !flipped;
+    renderCard();
+  }
+
+  function ready() {
+    $("msg").hidden = true;
+    $("tiles").hidden = false;
+    renderHome();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".tile"), function (b) {
+    b.addEventListener("click", function () { enter(b.getAttribute("data-k")); });
+  });
+  $("homeBtn").addEventListener("click", function () { renderHome(); show("home"); });
+  $("shuf").addEventListener("click", shuffle);
+  $("prev").addEventListener("click", function () { move(-1); });
+  $("next").addEventListener("click", function () { move(1); });
+  $("card").addEventListener("click", flip);
+  $("card").addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } });
+  ["make", "memorized", "unknown"].forEach(function (k) {
+    $("c-" + k).addEventListener("click", function () { setStatus(k); });
+  });
+
+  fetch(CSV_URL, { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("http"); return r.text(); })
+    .then(function (t) { cards = toCards(parseCSV(t)); save(KEY_CACHE, cards); ready(); })
+    .catch(function () {
+      var c = load(KEY_CACHE);
+      if (c && c.length) { cards = c; ready(); }
+      else $("msg").textContent = "シートを読み込めませんでした。通信を確認して、開き直してください。";
+    });
+})();
+</script>
 </body>
 </html>
