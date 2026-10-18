@@ -24,6 +24,7 @@ h1{margin:19.6px 0 0;font-size:clamp(20px,7.5vh,34px);font-weight:500;text-align
 .tile span{font-size:clamp(20px,8vh,34px);font-weight:500}
 .tile small{font-size:.5em;margin-left:3px}
 #msg{align-self:center;color:#4B5563;font-size:15px}
+#sync{position:absolute;left:0;right:0;bottom:3px;text-align:center;font-size:12px;color:#4B5563;pointer-events:none}
 .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .left{display:flex;gap:10px}
 .rb{width:clamp(38px,11vh,48px);height:clamp(38px,11vh,48px);border-radius:50%;background:#fff;border:.5px solid #D3D8E6;display:grid;place-items:center;font-size:clamp(20px,6vh,24px)}
@@ -72,6 +73,7 @@ h1{margin:19.6px 0 0;font-size:clamp(20px,7.5vh,34px);font-weight:500;text-align
 <button class="tile" data-k="unknown" style="background:#F7C1C1;color:#7A1F1F"><b>覚えてない</b><span><em id="n-unknown" style="font-style:normal">0</em><small>枚</small></span></button>
 <button class="tile" data-k="unrated" style="background:#C9CCD2;color:#2A2F38"><b>未分類</b><span><em id="n-unrated" style="font-style:normal">0</em><small>枚</small></span></button>
 </div>
+<div id="sync"></div>
 </section>
 
 <section id="study" class="screen">
@@ -104,6 +106,9 @@ h1{margin:19.6px 0 0;font-size:clamp(20px,7.5vh,34px);font-weight:500;text-align
 (function () {
   var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR_s11QpNmzgSpUm_dJHcw7ljLd-omtgCKheM24lb_IfrXtnEXLaqCeNdGBKkcwELI3sH509CcfzRoX/pub?gid=0&single=true&output=csv";
   var KEY_ST = "flashcards.status.v1", KEY_CACHE = "flashcards.cache.v1";
+  var KEY_TIMES = "flashcards.times.v1", LEGACY_T = 1;
+  var SYNC_URL = "https://script.google.com/macros/s/AKfycbyOZlFm0r_WHAmr97f3-m1IBIpEtcW3JHY66wc53-XPP0lpnnSIT8sbmexWZQiQqWI53A/exec";
+  var syncing = false, again = false, timer = null;
   var NAMES = { make: "英作文できる", memorized: "暗記した", unknown: "覚えてない", unrated: "未分類" };
   var COLORS = { make: "#0B6E6F", memorized: "#3B4CCA", unknown: "#C2410C", unrated: "#4B5563" };
   var $ = function (id) { return document.getElementById(id); };
@@ -111,7 +116,7 @@ h1{margin:19.6px 0 0;font-size:clamp(20px,7.5vh,34px);font-weight:500;text-align
   function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
   function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  var cards = [], status = load(KEY_ST) || {}, list = [], idx = 0, flipped = false, filter = "unrated", shuffled = false;
+  var cards = [], status = load(KEY_ST) || {}, times = load(KEY_TIMES) || {}, list = [], idx = 0, flipped = false, filter = "unrated", shuffled = false;
   function st(id) { return status[id] || "unrated"; }
 
   function parseCSV(t) {
@@ -213,8 +218,10 @@ h1{margin:19.6px 0 0;font-size:clamp(20px,7.5vh,34px);font-weight:500;text-align
     var c = list[idx];
     if (!c) return;
     status[c.id] = k;
-    save(KEY_ST, status);
+    times[c.id] = Date.now();
+    persist();
     renderCard();
+    schedulePush();
   }
 
   function flip() {
@@ -223,10 +230,55 @@ h1{margin:19.6px 0 0;font-size:clamp(20px,7.5vh,34px);font-weight:500;text-align
     renderCard();
   }
 
+  function persist() { save(KEY_ST, status); save(KEY_TIMES, times); }
+  function tm(id) { return times[id] || (status[id] ? LEGACY_T : 0); }
+  function setMsg(m) { $("sync").textContent = m; }
+
+  function mergeRemote(remote) {
+    Object.keys(remote).forEach(function (id) {
+      var r = remote[id];
+      if (r && r.t > tm(id) && NAMES[r.s]) { status[id] = r.s; times[id] = r.t; }
+    });
+    persist();
+    renderHome();
+    if ($("study").classList.contains("on")) renderCard();
+  }
+
+  function sync() {
+    var ups = [];
+    if (syncing) { again = true; return; }
+    syncing = true;
+    setMsg("同期中…");
+    fetch(SYNC_URL, { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) throw new Error("bad");
+        var remote = j.status || {};
+        mergeRemote(remote);
+        Object.keys(status).forEach(function (id) {
+          var rt = remote[id] ? remote[id].t : -1;
+          if (tm(id) > rt) ups.push({ id: id, s: status[id], t: tm(id) });
+        });
+        if (!ups.length) return null;
+        return fetch(SYNC_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ updates: ups }) })
+          .then(function (r) { return r.json(); })
+          .then(function (j2) { if (!j2 || !j2.ok) throw new Error("bad"); mergeRemote(j2.status || {}); });
+      })
+      .then(function () { setMsg("同期済み"); })
+      .catch(function () { setMsg("同期できませんでした（この端末には保存済み）"); })
+      .then(function () {
+        syncing = false;
+        if (again) { again = false; sync(); }
+      });
+  }
+
+  function schedulePush() { clearTimeout(timer); timer = setTimeout(sync, 1500); }
+
   function ready() {
     $("msg").hidden = true;
     $("tiles").hidden = false;
     renderHome();
+    sync();
   }
 
   Array.prototype.forEach.call(document.querySelectorAll(".tile"), function (b) {
@@ -249,6 +301,9 @@ h1{margin:19.6px 0 0;font-size:clamp(20px,7.5vh,34px);font-weight:500;text-align
   ["make", "memorized", "unknown"].forEach(function (k) {
     $("c-" + k).addEventListener("click", function () { setStatus(k); });
   });
+
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && cards.length) sync(); });
+  window.addEventListener("online", function () { if (cards.length) sync(); });
 
   fetch(CSV_URL, { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw new Error("http"); return r.text(); })
