@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="単語カード">
+<title>単語カード</title>
+<style>
+:root{--bg:#f2f3f8;--ink:#1a2342;--line:#dfe2ec}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;
+  overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+
+/* ボタン共通：枠線に色、中は背景色。押すと色で塗りつぶす */
+button{--c:var(--ink);font-family:inherit;cursor:pointer;background:var(--bg);color:var(--ink);border:2px solid var(--c)}
+button.pressed,button.sel{background:var(--c);color:#fff}
+.tb:active,.tile:active,.foot button:active{background:var(--c);color:#fff}
+button:disabled{opacity:.35;pointer-events:none}
+
+.screen{position:fixed;inset:0;display:none;flex-direction:column;
+  padding:max(env(safe-area-inset-top),8px) max(env(safe-area-inset-right),16px) max(env(safe-area-inset-bottom),8px) max(env(safe-area-inset-left),16px)}
+.screen.on{display:flex}
+
+/* ホーム */
+h1{margin:4px 0 8px;font-size:18px;font-weight:600;text-align:center;flex:none}
+.tiles{flex:1;min-height:0;display:flex;gap:14px}
+.tile{flex:1;border-width:3px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.tile .tl{font-size:30px;font-weight:700}
+.tile .tc{font-size:16px}
+.tile.study{--c:#6a45c2}
+.tile.newc{--c:#7a8094}
+.stats{display:flex;justify-content:center;gap:8px;margin:10px 0 6px;flex:none}
+.chip{--c:#555;padding:3px 14px;border-radius:999px;font-size:15px;font-weight:700;border:2px solid var(--c);color:var(--c)}
+.foot{display:flex;align-items:center;gap:12px;flex:none;height:38px}
+.foot button{height:34px;padding:0 16px;border-radius:999px;font-size:14px}
+#status{font-size:12px;opacity:.7}
+
+/* カード */
+.top{display:flex;align-items:center;gap:10px;height:56px;flex:none}
+.tb{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0}
+.grow{flex:1}
+.pill{padding:6px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px}
+.mid{flex:1;min-height:0;display:flex;gap:10px}
+.face{flex:1;min-height:0;background:#fff;border:1px solid var(--line);border-radius:26px;
+  display:grid;grid-template-rows:1fr auto 1fr;padding:0 28px;position:relative;text-align:center}
+.st{position:absolute;left:16px;top:12px;display:flex;align-items:center;gap:10px;font-size:13px;color:#5b6278}
+.st .p{--c:#7a8094;padding:4px 12px;border-radius:999px;color:#fff;font-weight:700;background:var(--c)}
+.word{grid-row:2;align-self:center;font-size:clamp(28px,11vh,48px);font-weight:600;line-height:1.3;word-break:break-word}
+.memo{grid-row:3;align-self:start;margin-top:14px;min-height:0;max-height:100%;overflow:auto;font-size:clamp(15px,5vh,20px);line-height:1.5;white-space:pre-wrap}
+.hint{position:absolute;left:0;right:0;bottom:10px;font-size:12px;color:#5b6278}
+.nav{width:64px;flex:none;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;padding:0}
+.bottom{display:flex;gap:10px;height:62px;padding-top:10px;flex:none}
+.rk{flex:1;border-radius:16px;font-size:28px;font-weight:700;padding:0 4px}
+.rk[data-r="◎"]{--c:#1f8a5b}
+.rk[data-r="◯"]{--c:#3b4fd8}
+.rk[data-r="△"]{--c:#d98a00}
+.rk[data-r="×"]{--c:#b8431f}
+
+/* 縦向き */
+#rot{display:none}
+@media (orientation:portrait){
+  #rot{display:flex;position:fixed;inset:0;z-index:99;background:var(--bg);align-items:center;justify-content:center;font-size:20px;text-align:center;padding:24px}
+}
+</style>
+</head>
+<body>
+
+<div id="rot">横向きにしてください</div>
+
+<div id="home" class="screen on">
+  <h1>選択してください</h1>
+  <div class="tiles">
+    <button id="tStudy" class="tile study"><span class="tl">学習</span></button>
+    <button id="tNew" class="tile newc"><span class="tl">未分類</span><span class="tc" id="cNew"></span></button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="foot"><button id="reload">my wordsから読み込み</button><span id="status"></span></div>
+</div>
+
+<div id="card" class="screen">
+  <div class="top">
+    <button id="bHome" class="tb" aria-label="ホームに戻る">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    </button>
+    <div class="grow"></div>
+    <span id="num" class="pill"></span>
+  </div>
+  <div class="mid">
+    <button id="bPrev" class="nav">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>前へ
+    </button>
+    <div id="face" class="face">
+      <div class="st" id="st"><span>この単語の状態</span><span class="p" id="stp"></span></div>
+      <div class="word" id="word"></div>
+      <div class="memo" id="memo"></div>
+      <div class="hint" id="hint"></div>
+    </div>
+    <button id="bNext" class="nav">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>次へ
+    </button>
+  </div>
+  <div class="bottom">
+    <button class="rk" data-r="◎"></button>
+    <button class="rk" data-r="◯"></button>
+    <button class="rk" data-r="△"></button>
+    <button class="rk" data-r="×"></button>
+  </div>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTRqHXli7C2Az0dV0czvRINpeI_8-UweM1O4_kpRKuYwdkZOL87okrrKGQLWPwZwJMWcYLlSheg-s_m/pub?gid=0&single=true&output=csv';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwmpBDUOSxOxYp7Sejh5kTb4zyhTKAnHRU0Cl-RBd-20ZyaTAWvNyfpRJ86grjGJpQO/exec';
+
+const RANKS = ['◎','◯','△','×'];
+const COL = {'◎':'#1f8a5b','◯':'#3b4fd8','△':'#d98a00','×':'#b8431f'};
+const UNC = '#7a8094';
+// 分類ごとの「次に出すまでの目安」（ミリ秒）
+const MIN = 60*1000, DAY = 24*60*MIN;
+const INTERVAL = {'×':10*MIN, '△':1*DAY, '◯':4*DAY, '◎':14*DAY};
+// 学習中に同じカードをもう一度出すまでの枚数（1カード1回だけ）
+const REQUEUE = {'×':5, '△':10};
+const LS = {cards:'words_cards_v1', state:'words_state_v1', pending:'words_pending_v1'};
+
+let cards = [], byId = {}, state = {}, pending = {};
+let sess = null;
+
+const $ = id => document.getElementById(id);
+function lsGet(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+/* ---------- データ ---------- */
+function parseCSV(t){
+  const rows = []; let row = [], f = '', q = false;
+  for(let i = 0; i < t.length; i++){
+    const c = t[i];
+    if(q){
+      if(c === '"'){ if(t[i+1] === '"'){ f += '"'; i++; } else q = false; }
+      else f += c;
+    }else if(c === '"') q = true;
+    else if(c === ','){ row.push(f); f = ''; }
+    else if(c === '\n' || c === '\r'){
+      if(c === '\r' && t[i+1] === '\n') i++;
+      row.push(f); f = ''; rows.push(row); row = [];
+    }else f += c;
+  }
+  if(f !== '' || row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+function buildCards(text){
+  const list = [];
+  parseCSV(text).forEach(r => {
+    const id = Number((r[0] || '').trim());
+    if(!r[0] || isNaN(id)) return;
+    const jp = (r[1] || '').trim(), en = (r[2] || '').trim(), memo = (r[3] || '').trim();
+    if(!jp && !en) return;
+    list.push({id, jp, en, memo});
+  });
+  return list;
+}
+function indexCards(){ byId = {}; cards.forEach(c => byId[c.id] = c); }
+function toMs(v){
+  if(typeof v === 'number') return v;
+  const n = Number(v); if(!isNaN(n) && v !== '') return n;
+  const d = Date.parse(v); return isNaN(d) ? 0 : d;
+}
+function mergeRemote(arr){
+  (arr || []).forEach(it => {
+    if(!RANKS.includes(it.rank)) return;
+    const id = Number(it.id), ts = toMs(it.ts);
+    if(!state[id] || ts > state[id].ts) state[id] = {rank: it.rank, ts};
+  });
+  lsSet(LS.state, state);
+}
+let flushing = false;
+async function flush(){
+  if(flushing) return;           // 同時に複数送信しない（状態シートの重複行を防ぐ）
+  flushing = true;
+  try{
+    while(Object.keys(pending).length){
+      for(const key of Object.keys(pending)){
+        const p = pending[key];
+        try{
+          await fetch(GAS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body: JSON.stringify({id: Number(key), rank: p.rank, ts: p.ts})});
+          if(pending[key] && pending[key].ts === p.ts){ delete pending[key]; lsSet(LS.pending, pending); }
+        }catch(e){ return; }     // 通信できないときは保存しておき、次回送信する
+      }
+    }
+  }finally{ flushing = false; }
+}
+function setStatus(t){ $('status').textContent = t; }
+async function reload(){
+  setStatus('読み込み中…');
+  let ok = true;
+  try{
+    const res = await fetch(CSV_URL + '&_=' + Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('csv');
+    const list = buildCards((await res.text()).replace(/^\uFEFF/, ''));
+    if(list.length){ cards = list; lsSet(LS.cards, cards); indexCards(); }
+  }catch(e){ ok = false; }
+  try{
+    await flush();
+    const res = await fetch(GAS_URL, {cache:'no-store'});
+    mergeRemote(await res.json());
+  }catch(e){ ok = false; }
+  updateHome();
+  setStatus(ok ? '最新です（' + cards.length + '語）' : '通信できないため保存済みのデータを表示中');
+}
+
+/* ---------- 出題 ---------- */
+function shuffled(a){
+  a = a.slice();
+  for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function prio(id){ const s = state[id]; return (Date.now() - s.ts) / INTERVAL[s.rank]; }
+function counts(){
+  const unc = cards.filter(c => !state[c.id]);
+  const cls = cards.filter(c => state[c.id]);
+  const due = cls.filter(c => prio(c.id) >= 1);
+  return {unc, cls, due};
+}
+
+/* ---------- ホーム ---------- */
+function show(id){ $('home').classList.toggle('on', id === 'home'); $('card').classList.toggle('on', id === 'card'); }
+function updateHome(){
+  const {unc, cls} = counts();
+  $('cNew').textContent = unc.length ? unc.length + '枚' : (cards.length ? 'すべて分類済み' : '0枚');
+  $('tNew').disabled = !unc.length;
+  $('tStudy').disabled = !cls.length;
+  $('stats').innerHTML = '';
+  RANKS.forEach(r => {
+    const n = cls.filter(c => state[c.id].rank === r).length;
+    const s = document.createElement('span');
+    s.className = 'chip'; s.style.setProperty('--c', COL[r]); s.textContent = r + ' ' + n;
+    $('stats').appendChild(s);
+  });
+}
+
+/* ---------- カード画面 ---------- */
+function start(mode){
+  let ids;
+  if(mode === 'new') ids = shuffled(counts().unc).map(c => c.id);
+  else{
+    const {due, cls} = counts();
+    // 期限のカードがなければ、分類済みの全カードを対象にする（先取り学習）
+    // 忘れかけ度（優先度）に0.6〜1.4倍のランダムなゆらぎを掛けて並べる
+    ids = (due.length ? due : cls)
+      .map(c => ({id: c.id, k: prio(c.id) * (0.6 + Math.random() * 0.8)}))
+      .sort((a, b) => b.k - a.k).map(o => o.id);
+  }
+  if(!ids.length) return;
+  sess = {mode, ids, idx:0, requeued:new Set(), flipped:false};
+  show('card'); render();
+}
+function finished(){ return sess.idx >= sess.ids.length; }
+function render(){
+  document.querySelectorAll('.nav, .rk').forEach(b => b.classList.remove('pressed'));
+  sess.flipped = false;
+  const done = finished();
+  const c = done ? null : byId[sess.ids[sess.idx]];
+  const s = c ? state[c.id] : null;
+  document.querySelectorAll('.rk').forEach(b => {
+    const r = b.dataset.r, sel = !!s && s.rank === r;
+    b.disabled = done;
+    b.classList.toggle('sel', sel);
+    b.textContent = (sel ? '✓ ' : '') + r;
+  });
+  $('bNext').disabled = done;
+  $('bPrev').disabled = sess.idx === 0;
+  $('st').style.display = done ? 'none' : 'flex';
+  if(done){
+    $('word').textContent = sess.mode === 'study' ? '今日の復習は完了' : '未分類の分類が完了';
+    $('memo').textContent = ''; $('hint').textContent = ''; $('num').style.display = 'none';
+    return;
+  }
+  $('num').style.display = ''; $('num').textContent = 'シート No.' + c.id;
+  $('stp').textContent = s ? s.rank : '未分類';
+  $('stp').style.setProperty('--c', s ? COL[s.rank] : UNC);
+  draw();
+}
+function draw(){
+  const c = byId[sess.ids[sess.idx]];
+  if(!sess.flipped){
+    $('word').textContent = c.jp; $('memo').textContent = '';
+    $('hint').textContent = 'タップして英単語を表示';
+  }else{
+    $('word').textContent = c.en; $('memo').textContent = c.memo;
+    $('hint').textContent = 'タップして日本語を表示';
+  }
+}
+function rate(r){
+  if(!sess || finished()) return;
+  const id = sess.ids[sess.idx], ts = Date.now();
+  state[id] = {rank:r, ts}; lsSet(LS.state, state);
+  pending[id] = {rank:r, ts}; lsSet(LS.pending, pending); flush();
+  if(sess.mode === 'study' && REQUEUE[r] && !sess.requeued.has(id)){
+    sess.requeued.add(id);
+    sess.ids.splice(Math.min(sess.idx + 1 + REQUEUE[r], sess.ids.length), 0, id);
+  }
+  sess.idx++; render();
+}
+
+/* ---------- ボタン操作（押している間〜次のカードに移るまで色が付いたまま） ---------- */
+let busy = false;
+function bindBtn(btn, can, action){
+  let down = false;
+  btn.addEventListener('pointerdown', () => {
+    if(busy || !can()) return;
+    down = true; btn.classList.add('pressed');
+  });
+  btn.addEventListener('pointercancel', () => {
+    if(down){ down = false; btn.classList.remove('pressed'); }
+  });
+  btn.addEventListener('pointerup', e => {
+    if(!down) return;
+    down = false;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if(!el || !btn.contains(el)){ btn.classList.remove('pressed'); return; }
+    busy = true;
+    setTimeout(() => { busy = false; action(); }, 140);
+  });
+  btn.addEventListener('click', e => e.preventDefault());
+}
+document.querySelectorAll('.rk').forEach(b =>
+  bindBtn(b, () => sess && !finished(), () => rate(b.dataset.r)));
+bindBtn($('bPrev'), () => sess && sess.idx > 0, () => { sess.idx--; render(); });
+bindBtn($('bNext'), () => sess && !finished(), () => { sess.idx++; render(); });
+document.addEventListener('touchstart', () => {}, {passive:true});
+
+/* ---------- イベント ---------- */
+$('tStudy').onclick = () => start('study');
+$('tNew').onclick = () => start('new');
+$('reload').onclick = reload;
+$('bHome').onclick = () => { sess = null; updateHome(); show('home'); };
+$('face').onclick = () => { if(!sess || finished()) return; sess.flipped = !sess.flipped; draw(); };
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && $('home').classList.contains('on')) reload();
+});
+
+/* ---------- 起動 ---------- */
+cards = lsGet(LS.cards, []); state = lsGet(LS.state, {}); pending = lsGet(LS.pending, {});
+indexCards(); updateHome(); reload();
+</script>
+</body>
+</html>
